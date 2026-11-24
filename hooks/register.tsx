@@ -116,8 +116,10 @@ export const register: Register = (on, options) => {
   )
 
   on('command.run', { command: 'crew' }, async $ => {
-    const shown = await togglePane($)
-    return { text: shown ? 'Agent Crew panel opened.' : 'Agent Crew panel closed.' }
+    const t = await w($)
+    const result = await togglePane($)
+    if (result.shown) return { text: t.panelOpened }
+    return { text: result.reason ? t.panelWaiting(result.reason) : t.panelClosed }
   })
 
   on('command.run', { command: 'crew-review' }, async $ => {
@@ -232,9 +234,10 @@ export const register: Register = (on, options) => {
 
   // --- drawing: the band above the prompt and the panel ----------------------------------
 
-  // The desktop app has the button beside the message box instead (below).
+  // The desktop app has the button beside the message box instead (below), and this
+  // one only while that one cannot be drawn there (no room, or no Client element).
   on('ui.render', { component: 'AbovePrompt' }, async ($, e, next) => {
-    if (e.props.hasSurvey || e.surface === 'desktop') return next(e)
+    if (e.props.hasSurvey || (e.surface === 'desktop' && besideShown)) return next(e)
     const { Box, Button } = $.ui.resolve(e)
     const t = await w($)
     const running = (await read($, agents)).filter(a => a.status === 'run').length
@@ -257,12 +260,15 @@ export const register: Register = (on, options) => {
   on('ui.render', { component: 'BesidePrompt' }, async ($, e, next) => {
     if (e.surface !== 'desktop') return next(e)
     const table = $.ui.resolve(e)
-    if (!('Client' in table)) return next(e)
     const t = await w($)
     const list = await read($, agents)
     const running = list.filter(a => a.status === 'run')
     const label = running.length ? t.bandRunning(running.length) : t.bandIdle
-    if (e.props.maxColumns < label.length) return next(e)
+    if (!('Client' in table) || e.props.maxColumns < label.length) {
+      setBesideShown($, false)
+      return next(e)
+    }
+    setBesideShown($, true)
     const { Client } = table
     return (
       <Client
@@ -545,14 +551,34 @@ async function commitsBetween($: EngineInterface, from: string) {
   return r && r.exitCode === 0 ? Number(r.stdout.trim()) : null
 }
 
-async function togglePane($: EngineInterface): Promise<boolean> {
-  const open = (await $.ui.panes()).some((p: { id: string }) => p.id === PANE)
-  if (open) {
+/**
+ * Closes the panel only when the person can see it. A panel that is open but undrawn
+ * (opened where no surface placed it, or behind another tab) is opened again instead,
+ * which shows it: closing what nobody sees would look like a click that did nothing.
+ */
+async function togglePane(
+  $: EngineInterface,
+): Promise<{ shown: true } | { shown: false; reason?: string }> {
+  const pane = (await $.ui.panes()).find(p => p.id === PANE)
+  if (pane && pane.isPlaced && pane.isShown) {
     await $.ui.close({ id: PANE })
-    return false
+    return { shown: false }
   }
-  await $.ui.open({ id: PANE, title: (await w($)).title })
-  return true
+  const opened = await $.ui.open({ id: PANE, title: (await w($)).title })
+  return opened.isPlaced ? { shown: true } : { shown: false, reason: opened.reason }
+}
+
+/**
+ * Whether the desktop button beside the message box is drawn. Until it is, the button
+ * above the message box stands in for it. A module variable, not `$.state`, as a render
+ * hook may not write state; a reload resets it and the next drawing sets it again.
+ */
+let besideShown = false
+
+function setBesideShown($: EngineInterface, shown: boolean) {
+  if (besideShown === shown) return
+  besideShown = shown
+  $.ui.invalidate('ui.render')
 }
 
 async function detectLang($: EngineInterface): Promise<Lang> {

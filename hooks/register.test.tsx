@@ -18,6 +18,14 @@ const PANE = {
   },
 } as const
 
+// /crew as the person types it, in a terminal wide enough for a pane.
+const CREW = {
+  command: 'crew',
+  args: '',
+  origin: { kind: 'composer' },
+  presentation: { isFullscreen: false, columns: 120 },
+} as const
+
 const BAND = {
   plugin: 'agent-crew',
   component: 'AbovePrompt',
@@ -190,10 +198,6 @@ test('in the desktop app, the button sits beside the message box, not above it',
   await $.session.start({ cwd: 'C:/proj', surface: 'desktop', isInteractive: true })
   await settle()
 
-  const band = await $.ui.mount({ ...BAND, surface: 'desktop' })
-  expect(await band.find({ type: 'Button', key: 'crew' })).toBe(undefined)
-  await band.unmount()
-
   const beside = await $.ui.mount({
     plugin: 'agent-crew',
     component: 'BesidePrompt',
@@ -208,7 +212,61 @@ test('in the desktop app, the button sits beside the message box, not above it',
   await beside.pointer({ type: 'up', x: 1, y: 0, button: 'left', in: 'crew-toggle' })
   await settle()
   expect(open).toBe(false)
+
+  // With the button beside the message box drawn, none above it.
+  const band = await $.ui.mount({ ...BAND, surface: 'desktop' })
+  expect(await band.find({ type: 'Button', key: 'crew' })).toBe(undefined)
+  await band.unmount()
   await beside.unmount()
+})
+
+test('in the desktop app, with no room beside the message box, the button is above it', async ($, on) => {
+  engine(on, 'en-US')
+  await $.session.start({ cwd: 'C:/proj', surface: 'desktop', isInteractive: true })
+  await settle()
+
+  const beside = await $.ui.mount({
+    plugin: 'agent-crew',
+    component: 'BesidePrompt',
+    surface: 'desktop',
+    props: { maxColumns: 4, floatRows: 10, floatColumns: 60, isWorking: false, view: {} },
+  } as const)
+  expect(await beside.find({ type: 'Client', key: 'crew-toggle' } as never)).toBe(undefined)
+  await settle()
+
+  const band = await $.ui.mount({ ...BAND, surface: 'desktop' })
+  const button = await band.find({ type: 'Button', key: 'crew' })
+  expect(button?.text).toBe('Agent Crew')
+  await band.unmount()
+  await beside.unmount()
+})
+
+test('/crew shows a panel that is open but not drawn, instead of closing it', async ($, on) => {
+  engine(on, 'es-ES')
+  let placed = false
+  let closed = false
+  on('ui.panes', () => ({
+    value: [{ id: 'agent-crew', title: 'Agent Crew', isShown: placed, isFocused: false, isPlaced: placed }],
+  }))
+  on('ui.open', () => {
+    placed = true
+    return { value: { isPlaced: true } }
+  })
+  on('ui.close', () => {
+    closed = true
+    return { value: undefined }
+  })
+  await $.session.start({ cwd: 'C:/proj', surface: 'vscode', isInteractive: true })
+  await settle()
+
+  const first = await $.command.run(CREW)
+  expect(closed).toBe(false)
+  expect(placed).toBe(true)
+  expect(first.text).toBe('Panel de Agent Crew abierto.')
+
+  const second = await $.command.run(CREW)
+  expect(closed).toBe(true)
+  expect(second.text).toBe('Panel de Agent Crew cerrado.')
 })
 
 /** Lets the work the mod left running (a language check, a review) move on. */

@@ -39,6 +39,9 @@ const EN = {
   reviewFailed: 'The review could not finish',
   commandDescription: 'Open or close the Agent Crew panel',
   reviewCommandDescription: 'Analyse this project and update its subagents',
+  panelOpened: 'Agent Crew panel opened.',
+  panelClosed: 'Agent Crew panel closed.',
+  panelWaiting: (why: string) => `The Agent Crew panel is open but cannot be shown here: ${why}`,
   doing: {
     read: (f: string) => `Reading ${f}`,
     grep: (p: string) => `Searching “${p}”`,
@@ -91,6 +94,9 @@ const ES: typeof EN = {
   reviewFailed: 'La revisión no ha podido terminar',
   commandDescription: 'Abre o cierra el panel de Agent Crew',
   reviewCommandDescription: 'Analiza este proyecto y actualiza sus subagentes',
+  panelOpened: 'Panel de Agent Crew abierto.',
+  panelClosed: 'Panel de Agent Crew cerrado.',
+  panelWaiting: why => `El panel de Agent Crew está abierto, pero aquí no se puede mostrar: ${why}`,
   doing: {
     read: f => `Leyendo ${f}`,
     grep: p => `Buscando «${p}»`,
