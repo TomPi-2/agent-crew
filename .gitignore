@@ -1,0 +1,5 @@
+# Written by Claude Code when it loads the mod (editor types).
+.claude-plugin/types/
+.DS_Store
+Thumbs.db
+*.log

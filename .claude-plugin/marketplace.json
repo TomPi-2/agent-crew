@@ -1,0 +1,13 @@
+{
+  "name": "agent-crew",
+  "owner": {
+    "name": "TomPi"
+  },
+  "plugins": [
+    {
+      "name": "agent-crew",
+      "source": "./"
+    }
+  ],
+  "description": "Agent Crew: see your Claude Code subagents at work and give every project a crew of its own."
+}

@@ -1,0 +1,31 @@
+{
+  "name": "agent-crew",
+  "version": "0.1.0",
+  "description": "See your subagents at work, one animated character per model, and give every project a crew of subagents designed for it and kept up to date.",
+  "author": { "name": "TomPi" },
+  "license": "MIT",
+  "keywords": ["subagents", "agents", "panel", "productivity"],
+  "types": "./types/index.d.ts",
+  "userConfig": {
+    "language": {
+      "type": "string",
+      "title": "Language / Idioma",
+      "description": "Language of the panel: auto follows your system (English or Spanish).",
+      "default": "auto",
+      "options": ["auto", "en", "es"]
+    },
+    "analysisModel": {
+      "type": "string",
+      "title": "Model for the project analysis",
+      "description": "Model that studies the project and designs its subagents.",
+      "default": "sonnet",
+      "options": ["sonnet", "opus", "haiku"]
+    },
+    "autoReview": {
+      "type": "boolean",
+      "title": "Keep project subagents up to date",
+      "description": "When a project you allowed has changed a lot, review its subagents in the background and say what changed.",
+      "default": true
+    }
+  }
+}
