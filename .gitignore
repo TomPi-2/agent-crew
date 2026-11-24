@@ -3,3 +3,6 @@
 .DS_Store
 Thumbs.db
 *.log
+
+# Local Claude Code files: the subagents Agent Crew generated for this repo.
+.claude/
