@@ -10,7 +10,7 @@ A Claude Code mod that lets you **see your subagents at work** and gives every p
 
 **A panel with your subagents.** Each running subagent shows up as a small animated character: the initial of its model with a face. H is Haiku (a quick hop), S is Sonnet (a gentle sway), O is Opus (slow breathing) and F is Fable (floating). Each one has its own colour, and next to it you see its name, its model and what it is doing right now, such as *Reading server.py* or *Searching "parse_config"*. When it finishes, it smiles and moves to *Finished* with its time and number of steps. **View** opens its transcript.
 
-**A button to open and close it.** A thin bar above the prompt shows *Agent Crew* and how many subagents are running. Click it to open or close the panel; you don't need to type a command.
+**A button to open and close it.** A quiet *Agent Crew* label shows how many subagents are running, in the colour of one at work. Click it to open or close the panel; you don't need to type a command. In the desktop app it sits right beside the message box. In VS Code and the terminal it is on the right of a thin bar above the prompt.
 
 **Subagents made for your project.** The first time you open a project, Agent Crew asks whether it may analyse it. If you say yes, a read-only architect subagent studies the project and designs 2 to 6 specialists, each with the cheapest model that does the job well. They are written to `.claude/agents/`, where you can read, edit and share them. While you work, Claude delegates matching tasks to them, which saves usage.
 
@@ -38,7 +38,7 @@ In the desktop app, where `/plugin` does not run: click **+** next to the prompt
 
 ## Use
 
-- **Panel:** the *Agent Crew* button above the prompt, or `/crew`.
+- **Panel:** the *Agent Crew* button (beside the message box in the desktop app, above the prompt in VS Code and the terminal), or `/crew`.
 - **Review a project's crew now:** *Review now* in the panel, or `/crew-review`. In a project you haven't set up yet, it asks first.
 - **Settings** (in the plugin's config):
   - `language`: `auto`, `en` or `es`. It sets the panel and the subagents' descriptions.

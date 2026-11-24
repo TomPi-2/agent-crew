@@ -10,7 +10,7 @@ Un mod de Claude Code que te deja **ver a tus subagentes trabajando** y le da a 
 
 **Un panel con tus subagentes.** Cada subagente en marcha aparece como un personaje animado: la inicial de su modelo con cara. H es Haiku (da saltitos), S es Sonnet (se balancea), O es Opus (respira despacio) y F es Fable (flota). Cada uno tiene su color, y al lado ves su nombre, su modelo y lo que está haciendo en ese momento, por ejemplo *Leyendo server.py* o *Buscando «parse_config»*. Cuando acaba, sonríe y pasa a *Terminados* con lo que ha tardado y los pasos que ha dado. **Ver** abre su conversación.
 
-**Un botón para abrirlo y cerrarlo.** Una franja fina encima de donde escribes muestra *Agent Crew* y cuántos subagentes hay en marcha. Pulsa para abrir o cerrar el panel; no hace falta escribir ningún comando.
+**Un botón para abrirlo y cerrarlo.** Una etiqueta discreta, *Agent Crew*, muestra cuántos subagentes hay en marcha, con el color de uno que esté trabajando. Púlsala para abrir o cerrar el panel; no hace falta escribir ningún comando. En la app de escritorio está justo al lado de la caja donde escribes. En VS Code y en la terminal está a la derecha de una franja fina encima del prompt.
 
 **Subagentes hechos para tu proyecto.** La primera vez que abres un proyecto, Agent Crew te pregunta si puede analizarlo. Si dices que sí, un subagente arquitecto que solo lee estudia el proyecto y diseña entre 2 y 6 especialistas, cada uno con el modelo más barato que hace bien su trabajo. Se guardan en `.claude/agents/`, donde puedes leerlos, editarlos y compartirlos. Mientras trabajas, Claude les pasa las tareas que encajan con ellos, y eso ahorra uso.
 
@@ -38,7 +38,7 @@ En la app de escritorio, donde `/plugin` no funciona: pulsa **+** junto a la caj
 
 ## Usarlo
 
-- **Panel:** el botón *Agent Crew* encima del prompt, o `/crew`.
+- **Panel:** el botón *Agent Crew* (al lado de la caja donde escribes en la app de escritorio, encima del prompt en VS Code y en la terminal), o `/crew`.
 - **Revisar ahora el equipo de un proyecto:** *Revisar ahora* en el panel, o `/crew-review`. En un proyecto que aún no has configurado, primero pregunta.
 - **Ajustes** (en la configuración del plugin):
   - `language`: `auto`, `en` o `es`. Fija el del panel y el de las descripciones de los subagentes.
