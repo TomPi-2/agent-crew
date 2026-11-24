@@ -34,8 +34,6 @@ claude plugin install agent-crew --marketplace TomPi-2/agent-crew
 
 In the desktop app, where `/plugin` does not run: click **+** next to the prompt box, then **Plugins**, **Add marketplace** with `TomPi-2/agent-crew`, then **Add plugin**.
 
-While this repository is private, only people with access to it on GitHub can install the mod, and their computer needs a git credential for github.com (an SSH key, or `gh auth login` then `gh auth setup-git`).
-
 ## Use
 
 - **Panel:** the *Agent Crew* button above the prompt, or `/crew`.
