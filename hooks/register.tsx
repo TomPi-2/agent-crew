@@ -370,6 +370,13 @@ async function runReview($: EngineInterface) {
   reviewing = true
   const t = await w($)
   const now = await $.clock.now()
+  // A review started by an earlier load of the module (a reload while it ran) is still in
+  // the session's state: don't start a second one alongside it.
+  const current = await read($, review)
+  if (current.status === 'running' && now - current.at < REVIEW_TIMEOUT_MS) {
+    reviewing = false
+    return
+  }
   await update($, review, () => ({ status: 'running', message: t.reviewing, at: now }))
   try {
     const { ours, theirs } = await existingAgents($)
@@ -400,17 +407,8 @@ async function runReview($: EngineInterface) {
     for (const agent of fresh) {
       const text = renderFile(agent)
       await $.fs.write(`${root}/${AGENTS_DIR}/${agent.name}.md`, text)
+      // Claude Code picks the new file up in this same session: no need to register it.
       written[agent.name] = fingerprint(text)
-      // Usable right away; from the next session on, Claude Code loads the file itself.
-      await $.agent
-        .register({
-          name: agent.name,
-          description: agent.description,
-          prompt: agent.prompt,
-          ...(agent.model !== 'inherit' ? { model: agent.model } : {}),
-          ...(agent.tools.length ? { tools: agent.tools } : {}),
-        })
-        .catch(() => undefined)
     }
     let removed = 0
     for (const file of changes.remove) {

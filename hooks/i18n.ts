@@ -37,7 +37,6 @@ const EN = {
       .filter(Boolean)
       .join(', ') || 'Already up to date',
   reviewFailed: 'The review could not finish',
-  nextSession: 'New ones are ready now and load as files in your next session.',
   commandDescription: 'Open or close the Agent Crew panel',
   reviewCommandDescription: 'Analyse this project and update its subagents',
   doing: {
@@ -90,7 +89,6 @@ const ES: typeof EN = {
       .filter(Boolean)
       .join(', ') || 'Ya estaban al día',
   reviewFailed: 'La revisión no ha podido terminar',
-  nextSession: 'Los nuevos ya se pueden usar y se cargan como archivos en la próxima sesión.',
   commandDescription: 'Abre o cierra el panel de Agent Crew',
   reviewCommandDescription: 'Analiza este proyecto y actualiza sus subagentes',
   doing: {
