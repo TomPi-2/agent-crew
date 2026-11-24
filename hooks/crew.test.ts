@@ -3,6 +3,7 @@ import { expect, test } from 'claude-code/testing'
 import { activityOf } from './activity'
 import {
   MARKER,
+  architectTask,
   changesFor,
   fingerprint,
   isStale,
@@ -11,8 +12,8 @@ import {
   renderFile,
   type PlannedAgent,
 } from './crew'
-import { langFrom, words } from './i18n'
-import { familyOf, mascot } from './mascots'
+import { langFrom, langOfText, talkWith, usualLang, words } from './i18n'
+import { LOGO, familyOf, logo, mascot } from './mascots'
 
 const SEARCH: PlannedAgent = {
   name: 'code-search',
@@ -135,4 +136,30 @@ test('one character per model family, each with its own movement', () => {
   expect(mascot('opus', 'fail', '#fff', 'a1')).not.toContain('<animateTransform')
   // Same agent, same mood: the same drawing, so a redraw does not restart it.
   expect(mascot('haiku', 'run', '#fff', 'a1')).toBe(mascot('haiku', 'run', '#fff', 'a1'))
+})
+
+test('the language the person writes in, and the descriptions written in it', () => {
+  expect(langOfText('haz que las descripciones se redacten en el idioma del usuario')).toBe('es')
+  expect(langOfText('¿Puedes revisar esto?')).toBe('es')
+  expect(langOfText('can you make the panel show what is running')).toBe('en')
+  expect(langOfText('ok')).toBe(null) // too short to say
+  expect(langOfText('```ts\nconst the = this.and(of)\n```\narregla esto, por favor')).toBe('es')
+
+  let talk = talkWith(undefined, 'es')
+  expect(usualLang(talk)).toBe(null) // one message is not a habit
+  talk = talkWith(talkWith(talk, 'es'), 'en')
+  expect(usualLang(talk)).toBe('es')
+  for (let i = 0; i < 60; i++) talk = talkWith(talk, 'en')
+  expect(usualLang(talk)).toBe('en') // a change of habit shows
+  expect(talk.en + talk.es).toBeLessThan(41)
+
+  expect(architectTask([], [], 'es')).toContain('Write every description in Spanish')
+  expect(architectTask([], [])).toContain('Write every description in English')
+})
+
+test('the logo: the four characters of the icon, in its colours', () => {
+  const svgs = logo(20)
+  expect(svgs.length).toBe(4)
+  LOGO.forEach(({ color }, i) => expect(svgs[i]).toContain(`fill="${color}"`))
+  expect(svgs[0]).toContain('width="20"')
 })

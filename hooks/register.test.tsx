@@ -175,3 +175,27 @@ test('with permission, a review asks the architect about this project', async ($
 async function settle() {
   for (let i = 0; i < 100; i++) await new Promise<void>(r => setTimeout(() => r(), 0))
 }
+
+test('the descriptions follow the language the person writes in, not only the system', async ($, on) => {
+  const stored: Record<string, unknown> = { 'consent:C:/proj': 'yes' }
+  engine(on, 'en-US', stored) // an English system
+  on('ui.log', () => ({ value: undefined }))
+  on('ui.toast', () => ({ value: undefined }))
+  on('fs.exists', () => ({ value: false }))
+  on('prompt.submit', (_, e) => ({ text: (e as { text: string }).text }))
+  const spawns: { prompt?: string }[] = []
+  on('agent.spawn', (_, e) => {
+    spawns.push(e as { prompt?: string })
+    return { deny: 'not in a test' }
+  })
+  await $.session.start({ cwd: 'C:/proj', surface: 'vscode', isInteractive: true })
+  await settle()
+  for (const text of ['¿Puedes mirar por qué falla?', 'arregla el test de la tripulación', 'y ahora haz un commit']) {
+    await $.prompt.submit({ text } as never)
+  }
+  await $.command.run({ command: 'crew-review', args: '' } as never)
+  await settle()
+
+  expect(stored.talk).toEqual({ en: 0, es: 3 }) // only the language is kept, never the text
+  expect(spawns.at(-1)?.prompt).toContain('Write every description in Spanish')
+})

@@ -16,7 +16,7 @@ Un mod de Claude Code que te deja **ver a tus subagentes trabajando** y le da a 
 
 **Siempre al día.** Cuando el proyecto ha cambiado bastante (unos 20 commits, o dos semanas con trabajo nuevo), Agent Crew revisa el equipo en segundo plano y te dice qué ha creado, cambiado o quitado. Solo toca los archivos que escribió él. Si editas uno, conserva tu versión. Los que ya no hacen falta van a la papelera; nunca se borra nada para siempre.
 
-**En español y en inglés.** Sigue el idioma de tu sistema, o puedes elegirlo en sus ajustes.
+**En español y en inglés.** El panel sigue el idioma de tu sistema. Las descripciones de los subagentes que escribe siguen el idioma en el que sueles escribir a Claude, o el del sistema mientras no lo sabe. Puedes elegir un idioma para todo en sus ajustes.
 
 ## Instalarlo
 
@@ -34,12 +34,14 @@ claude plugin install agent-crew --marketplace TomPi-2/agent-crew
 
 En la app de escritorio, donde `/plugin` no funciona: pulsa **+** junto a la caja del prompt, después **Plugins**, **Add marketplace** con `TomPi-2/agent-crew` y luego **Add plugin**.
 
+**Actualizaciones.** Claude Code no actualiza solo los plugins de este marketplace si no se lo pides. Para recibir las versiones nuevas automáticamente, ejecuta `/plugin`, abre **Marketplaces**, elige `agent-crew` y activa la actualización automática. Para actualizar una vez, ejecuta `claude plugin update agent-crew@agent-crew` en una terminal y después `/reload-plugins` en tu sesión.
+
 ## Usarlo
 
 - **Panel:** el botón *Agent Crew* encima del prompt, o `/crew`.
 - **Revisar ahora el equipo de un proyecto:** *Revisar ahora* en el panel, o `/crew-review`. En un proyecto que aún no has configurado, primero pregunta.
 - **Ajustes** (en la configuración del plugin):
-  - `language`: `auto`, `en` o `es`.
+  - `language`: `auto`, `en` o `es`. Fija el del panel y el de las descripciones de los subagentes.
   - `analysisModel`: el modelo del arquitecto (`sonnet` por defecto).
   - `autoReview`: mantener el equipo al día solo (activado por defecto).
 
@@ -49,6 +51,7 @@ En la app de escritorio, donde `/plugin` no funciona: pulsa **+** junto a la caj
 - El arquitecto solo puede leer el proyecto (Read, Grep, Glob). Los archivos los escribe Agent Crew, y solo en `.claude/agents/`.
 - Sus archivos llevan la marca `<!-- agent-crew:generated -->`. Los que no la llevan (tus propios agentes) nunca se cambian ni se quitan.
 - Añade una nota corta al prompt del sistema de Claude con la lista del equipo del proyecto. En ella le pide que les pase las tareas acotadas y que se quede con el diseño, los cambios importantes, la seguridad y las revisiones.
+- Mira lo que escribes a Claude solo para saber si escribes en español o en inglés. Guarda un recuento por idioma, nunca el texto.
 - Usa `git` para saber dónde empieza el proyecto y cuánto ha cambiado. En Windows también usa PowerShell, para leer el idioma del sistema y para mandar archivos a la papelera.
 
 ## Licencia

@@ -116,3 +116,50 @@ export function words(lang: Lang): Words {
 export function langFrom(locale: string): Lang {
   return /^(es|spa)/i.test(locale.trim()) ? 'es' : 'en'
 }
+
+// --- the language the person writes to Claude in ----------------------------------------
+
+const ES_WORDS = new Set(
+  ('el la los las de del que y en un una por para con es son se lo como pero más este esta ' +
+    'esto eso qué cómo hay haz hazlo puedes quiero también donde cuando porque sí ya muy ' +
+    'todo todos al le les mi tu su sin sobre ahora tiene hace bien').split(' '),
+)
+const EN_WORDS = new Set(
+  ('the an and of to is are in on for with this that it can you what how why please make ' +
+    'do does should would could there have has be from my your all also when but if just ' +
+    'now it’s it\'s don’t don\'t').split(' '),
+)
+
+/** The language a message is written in, or null when it does not say clearly. */
+export function langOfText(text: string): Lang | null {
+  const prose = text
+    .replace(/```[\s\S]*?```/g, ' ') // code says nothing about the person's language
+    .replace(/`[^`]*`/g, ' ')
+    .replace(/\S*[/\\]\S*/g, ' ') // paths and links
+    .toLowerCase()
+  let es = (prose.match(/[¿¡ñ]/g) ?? []).length
+  let en = 0
+  for (const word of prose.match(/[\p{L}'’]+/gu) ?? []) {
+    if (ES_WORDS.has(word) || /[áéíóú]/.test(word)) es += 1
+    else if (EN_WORDS.has(word)) en += 1
+  }
+  if (es >= 2 && es >= 2 * en) return 'es'
+  if (en >= 2 && en >= 2 * es) return 'en'
+  return null
+}
+
+/** How many recent messages were in each language. */
+export type Talk = { en: number; es: number }
+
+/** One more message in `lang`. Old counts fade, so a change of habit shows soon. */
+export function talkWith(talk: Talk | undefined, lang: Lang): Talk {
+  const next = { en: talk?.en ?? 0, es: talk?.es ?? 0 }
+  next[lang] += 1
+  return next.en + next.es > 40 ? { en: next.en / 2, es: next.es / 2 } : next
+}
+
+/** The language the person usually writes in, once a few messages have shown it. */
+export function usualLang(talk: Talk | undefined): Lang | null {
+  if (talk === undefined || talk.en + talk.es < 3) return null
+  return talk.es > talk.en ? 'es' : talk.en > talk.es ? 'en' : null
+}

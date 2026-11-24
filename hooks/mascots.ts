@@ -182,3 +182,16 @@ export function mascot(family: Family, mood: Mood, color: string, seed: string, 
     `</g></g></g></svg>`
   )
 }
+
+/** The crew in the colours of the mod's icon: H, S, O and F, as the icon shows them. */
+export const LOGO: { family: Family; color: string }[] = [
+  { family: 'haiku', color: '#22D3EE' },
+  { family: 'sonnet', color: '#A855F7' },
+  { family: 'opus', color: '#F59E0B' },
+  { family: 'fable', color: '#EC4899' },
+]
+
+/** The mod's logo for the panel: its four characters side by side, smiling, at rest. */
+export function logo(size = 20): string[] {
+  return LOGO.map(({ family, color }) => mascot(family, 'done', color, `logo-${family}`, size))
+}

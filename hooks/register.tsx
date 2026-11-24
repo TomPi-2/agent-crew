@@ -16,8 +16,8 @@ import {
   type Existing,
   type PlannedAgent,
 } from './crew'
-import { langFrom, words, type Lang } from './i18n'
-import { familyOf, mascot } from './mascots'
+import { langFrom, langOfText, talkWith, usualLang, words, type Lang, type Talk } from './i18n'
+import { familyOf, logo, mascot } from './mascots'
 
 const PLUGIN = 'agent-crew'
 const PANE = 'agent-crew'
@@ -26,6 +26,8 @@ const ARCHITECT_TYPE = `${PLUGIN}:${ARCHITECT}`
 const KEEP = 30 // subagents remembered
 const SHOW_DONE = 4 // finished ones shown under the running ones
 const REVIEW_TIMEOUT_MS = 10 * 60_000
+/** Store key: how many recent messages the person wrote in each language. */
+const TALK = 'talk'
 
 // Bright colours that read on light and dark themes; each running subagent gets its own.
 export const PALETTE = [
@@ -194,6 +196,16 @@ export const register: Register = (on, options) => {
     return next(e)
   })
 
+  // What the person types tells which language they talk to Claude in: the descriptions of
+  // the subagents are written in it. Only the language is kept, never the text.
+  on('prompt.submit', async ($, e, next) => {
+    const found = e.command || e.isMeta ? null : langOfText(e.text)
+    if (found !== null) {
+      await $.store.set(TALK, talkWith((await $.store.get(TALK)) as Talk | undefined, found))
+    }
+    return next(e)
+  }).catch(($, e, next) => next(e)) // it only listens: a failure never stops a prompt
+
   // --- the project's subagents -----------------------------------------------------------
 
   // --- the system prompt: point the main assistant at its crew -------------------------
@@ -295,8 +307,18 @@ export const register: Register = (on, options) => {
           ? `${t.projectCount(crew.length)}${state.message ? ` · ${state.message}` : ''}`
           : state.message || t.reviewOff
 
+    // The mod's logo on top: its four characters, as in its icon (where pictures are drawn).
+    const header = Svg !== undefined && (
+      <Box flexDirection="row" gap={0} alignItems="center">
+        {logo(20).map((source, i) => (
+          <Svg key={`logo-${i}`} source={source} alt="" width={20} height={20} />
+        ))}
+      </Box>
+    )
+
     return (
       <Box flexDirection="column" gap={1}>
+        {header}
         <Text dimColor>{running.length ? t.running(running.length) : t.none}</Text>
         {running.map(row)}
         {finished.length > 0 && <Text dimColor>{t.finished}</Text>}
@@ -383,6 +405,7 @@ async function runReview($: EngineInterface) {
     const task = architectTask(
       ours.map(o => ({ name: o.name, description: readFile(o.file, o.text).description })),
       theirs,
+      await writingLang($),
     )
     const spawned = await $.agent.spawn({
       subagentType: ARCHITECT_TYPE,
@@ -512,6 +535,16 @@ async function detectLang($: EngineInterface): Promise<Lang> {
     return found
   }
   return cached ?? 'en'
+}
+
+/**
+ * The language the subagents' descriptions are written in: the one chosen in the settings,
+ * else the one the person usually writes to Claude in, else the system's.
+ */
+async function writingLang($: EngineInterface): Promise<Lang> {
+  const chosen = (opts.language ?? 'auto').toLowerCase()
+  if (chosen === 'en' || chosen === 'es') return chosen
+  return usualLang((await $.store.get(TALK)) as Talk | undefined) ?? (await detectLang($))
 }
 
 async function projectRoot($: EngineInterface, cwd: string) {

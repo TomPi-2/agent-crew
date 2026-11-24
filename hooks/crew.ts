@@ -2,6 +2,8 @@
 // which files in .claude/agents/ to create, update or remove. No I/O here: register.tsx
 // does the reading and writing, so all of this can be tested on its own.
 
+import type { Lang } from './i18n'
+
 /** Marks a file as Agent Crew's: only files with it are ever updated or removed. */
 export const MARKER = '<!-- agent-crew:generated -->'
 export const AGENTS_DIR = '.claude/agents'
@@ -163,7 +165,7 @@ What makes a good crew:
 - Never duplicate Claude Code's built-in agents (general-purpose, Explore, Plan) nor the person's own agents listed in the task.
 - The cheapest model that does the job well: haiku for searching, reading and summarising; sonnet for writing code or text within a clear scope; opus only for deep reasoning that cannot be avoided. Never design, architecture, security or code review agents that would replace the main assistant's judgement.
 - The fewest tools that do the job: read-only agents get Read, Grep, Glob (and Bash only to run read-only commands such as tests). Only agents whose job is to write get Edit or Write.
-- description: one or two sentences saying WHEN to delegate to it, starting with "Use for" (in the project's language), concrete about this project.
+- description: one or two sentences saying WHEN to delegate to it, concrete about this project, written in the language the task names (the person reads it): in English it starts with "Use for", in Spanish with "Úsalo para".
 - prompt: the subagent's system prompt, in the project's main language: what it does, the project facts it needs (paths, commands, conventions), what it must never do, and the exact shape of the report it returns (short, with file:line references).
 - Keep the names of existing generated agents that are still useful, so they are updated rather than replaced; drop the ones that no longer fit.
 
@@ -173,11 +175,16 @@ Answer with ONLY a JSON object in a \`\`\`json block, nothing else:
 export function architectTask(
   ours: { name: string; description: string }[],
   theirs: { name: string; description: string }[],
+  language: Lang = 'en',
 ): string {
   const list = (xs: { name: string; description: string }[]) =>
     xs.length ? xs.map(x => `- ${x.name}: ${x.description}`).join('\n') : '- (none)'
   return [
     'Design the subagent crew for the project in the current working directory.',
+    '',
+    language === 'es'
+      ? 'Write every description in Spanish, the language of the person, starting with "Úsalo para".'
+      : 'Write every description in English, the language of the person, starting with "Use for".',
     '',
     'Agents generated earlier by Agent Crew (update, keep or drop them):',
     list(ours),

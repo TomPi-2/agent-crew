@@ -1,16 +1,17 @@
 {
   "name": "agent-crew",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "See your subagents at work, one animated character per model, and give every project a crew of subagents designed for it and kept up to date.",
   "author": { "name": "TomPi" },
   "license": "MIT",
+  "icon": "./.claude-plugin/icon.png",
   "keywords": ["subagents", "agents", "panel", "productivity"],
   "types": "./types/index.d.ts",
   "userConfig": {
     "language": {
       "type": "string",
       "title": "Language / Idioma",
-      "description": "Language of the panel: auto follows your system (English or Spanish).",
+      "description": "Language of the panel and of the subagents' descriptions (English or Spanish). auto: the panel follows your system; descriptions follow the language you usually write to Claude in, else your system.",
       "default": "auto",
       "options": ["auto", "en", "es"]
     },

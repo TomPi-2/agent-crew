@@ -16,7 +16,7 @@ A Claude Code mod that lets you **see your subagents at work** and gives every p
 
 **Kept up to date.** When the project has changed a lot (about 20 commits, or two weeks with new work), Agent Crew reviews the crew in the background and tells you what it created, updated or removed. It only ever touches the files it wrote. If you edit one, it keeps your version. Files it no longer needs go to the recycle bin; nothing is deleted permanently.
 
-**English and Spanish.** It follows your system language, or you can choose one in its settings.
+**English and Spanish.** The panel follows your system language. The descriptions of the subagents it writes follow the language you usually write to Claude in, or your system language until it can tell. You can choose a language in its settings for both.
 
 ## Install
 
@@ -34,12 +34,14 @@ claude plugin install agent-crew --marketplace TomPi-2/agent-crew
 
 In the desktop app, where `/plugin` does not run: click **+** next to the prompt box, then **Plugins**, **Add marketplace** with `TomPi-2/agent-crew`, then **Add plugin**.
 
+**Updates.** Claude Code does not update plugins from this marketplace on its own unless you ask it to. To get new versions automatically, run `/plugin`, open **Marketplaces**, pick `agent-crew` and turn on auto-update. To update once, run `claude plugin update agent-crew@agent-crew` in a shell, then `/reload-plugins` in your session.
+
 ## Use
 
 - **Panel:** the *Agent Crew* button above the prompt, or `/crew`.
 - **Review a project's crew now:** *Review now* in the panel, or `/crew-review`. In a project you haven't set up yet, it asks first.
 - **Settings** (in the plugin's config):
-  - `language`: `auto`, `en` or `es`.
+  - `language`: `auto`, `en` or `es`. It sets the panel and the subagents' descriptions.
   - `analysisModel`: the model the architect runs on (`sonnet` by default).
   - `autoReview`: keep the crew up to date on its own (on by default).
 
@@ -49,6 +51,7 @@ In the desktop app, where `/plugin` does not run: click **+** next to the prompt
 - The architect can only read the project (Read, Grep, Glob). Agent Crew writes the files itself, and only in `.claude/agents/`.
 - Its files carry the marker `<!-- agent-crew:generated -->`. Files without it (your own agents) are never changed or removed.
 - It adds one short note to Claude's system prompt listing the project's crew and asking it to delegate bounded tasks to them, while keeping design, core changes, security and reviews for itself.
+- It looks at what you type to Claude only to tell whether you write in English or Spanish. It keeps a count per language, never the text.
 - It runs `git` to find the project root and how much it has changed. On Windows it also runs PowerShell, to read the system language and to send files to the recycle bin.
 
 ## License
