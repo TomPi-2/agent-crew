@@ -91,6 +91,24 @@ test('only untouched files of ours are updated or removed', () => {
   expect(changes.kept).toEqual(['edited'])
 })
 
+test('an agent handed over with the marker is looked after like one of ours', () => {
+  // Someone added the marker to their own agent: no fingerprint, but it is the crew's now.
+  const handed = '---\nname: logs\ndescription: Old one\n---\n\n' + MARKER + '\n\nSummarise logs.'
+  const dropped = '---\nname: finder\ndescription: Old\n---\n\n' + MARKER + '\n\nSearch.'
+  const changes = changesFor(
+    { summary: '', agents: [{ ...SEARCH, name: 'logs' }] },
+    [
+      { file: 'logs.md', name: 'logs', text: handed },
+      { file: 'finder.md', name: 'finder', text: dropped },
+    ],
+    {},
+    [],
+  )
+  expect(changes.update.map(u => u.file)).toEqual(['logs.md'])
+  expect(changes.remove).toEqual(['finder.md']) // no longer needed: to the recycle bin
+  expect(changes.kept).toEqual([])
+})
+
 test('a project is looked at again once it has changed enough', () => {
   const day = 86_400_000
   expect(isStale(undefined, 0, null)).toBe(true)

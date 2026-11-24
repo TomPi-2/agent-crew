@@ -124,6 +124,10 @@ export type Changes = {
  * What to do with the plan. Only files of ours are touched, and only while they still hold
  * exactly what we wrote (`written`: name → fingerprint): a person's edit is never overwritten
  * or removed.
+ *
+ * A file with the marker that we never wrote (no fingerprint) was handed over to the crew:
+ * someone added the marker to an agent of their own so that Agent Crew looks after it. It
+ * is managed like one of ours from then on.
  */
 export function changesFor(
   plan: Plan,
@@ -133,7 +137,8 @@ export function changesFor(
 ): Changes {
   const changes: Changes = { create: [], update: [], remove: [], kept: [] }
   const byName = new Map(ours.map(e => [e.name, e]))
-  const isUntouched = (e: Existing) => written[e.name] === fingerprint(e.text)
+  const isUntouched = (e: Existing) =>
+    written[e.name] === undefined || written[e.name] === fingerprint(e.text)
   for (const agent of plan.agents) {
     if (theirs.includes(agent.name)) continue // the person has their own with this name
     const old = byName.get(agent.name)
