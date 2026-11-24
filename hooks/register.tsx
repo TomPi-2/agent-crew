@@ -28,6 +28,7 @@ const SHOW_DONE = 4 // finished ones shown under the running ones
 const REVIEW_TIMEOUT_MS = 10 * 60_000
 /** Store key: how many recent messages the person wrote in each language. */
 const TALK = 'talk'
+const TOGGLE = 'crew-toggle' // the button beside the message box (desktop app)
 
 // Bright colours that read on light and dark themes; each running subagent gets its own.
 export const PALETTE = [
@@ -231,17 +232,51 @@ export const register: Register = (on, options) => {
 
   // --- drawing: the band above the prompt and the panel ----------------------------------
 
+  // The desktop app has the button beside the message box instead (below).
   on('ui.render', { component: 'AbovePrompt' }, async ($, e, next) => {
-    if (e.props.hasSurvey) return next(e)
+    if (e.props.hasSurvey || e.surface === 'desktop') return next(e)
     const { Box, Button } = $.ui.resolve(e)
     const t = await w($)
     const running = (await read($, agents)).filter(a => a.status === 'run').length
     const label = running ? t.bandRunning(running) : t.bandIdle
+    // As quiet as the band allows: on the right, no chrome, dim until pointed at.
     return (
-      <Box flexDirection="row">
-        <Button key="crew" label={label} onPress={() => void togglePane($)} />
+      <Box flexDirection="row" justifyContent="flex-end">
+        <Button
+          key="crew"
+          label={label}
+          plain
+          dimColor={running === 0}
+          onPress={() => void togglePane($)}
+        />
       </Box>
     )
+  })
+
+  // Desktop app: a quiet label in the free room beside the message box.
+  on('ui.render', { component: 'BesidePrompt' }, async ($, e, next) => {
+    if (e.surface !== 'desktop') return next(e)
+    const table = $.ui.resolve(e)
+    if (!('Client' in table)) return next(e)
+    const t = await w($)
+    const list = await read($, agents)
+    const running = list.filter(a => a.status === 'run')
+    const label = running.length ? t.bandRunning(running.length) : t.bandIdle
+    if (e.props.maxColumns < label.length) return next(e)
+    const { Client } = table
+    return (
+      <Client
+        key={TOGGLE}
+        module="./toggle.tsx"
+        props={{ label, isRunning: running.length > 0, color: running[0]?.color ?? PALETTE[0] }}
+      />
+    )
+  })
+
+  on('ui.message', async ($, e, next) => {
+    if (e.element !== TOGGLE) return next(e)
+    await togglePane($)
+    return {}
   })
 
   on('ui.render', { component: 'Pane', requestId: PANE }, async ($, e) => {

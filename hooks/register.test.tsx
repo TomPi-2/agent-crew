@@ -113,7 +113,7 @@ test('a subagent at work: its character, what it does, and when it is done', asy
   await ui.unmount()
 })
 
-test('the button above the prompt opens and closes the panel', async ($, on) => {
+test('in VS Code, the quiet button above the prompt opens and closes the panel', async ($, on) => {
   engine(on, 'en-US')
   let open = false
   on('ui.panes', () => ({
@@ -132,7 +132,7 @@ test('the button above the prompt opens and closes the panel', async ($, on) => 
   await $.session.start({ cwd: 'C:/proj', surface: 'vscode', isInteractive: true })
   await settle()
 
-  for (const surface of ['vscode', 'desktop'] as const) {
+  for (const surface of ['vscode', 'terminal'] as const) {
     const band = await $.ui.mount({ ...BAND, surface })
     const button = await band.find({ type: 'Button', key: 'crew' })
     expect(button?.text).toBe('Agent Crew')
@@ -169,6 +169,46 @@ test('with permission, a review asks the architect about this project', async ($
   )
   expect((await ui.find({ type: 'Button', key: 'review' }))?.text).toBe('Configurar')
   await ui.unmount()
+})
+
+test('in the desktop app, the button sits beside the message box, not above it', async ($, on) => {
+  engine(on, 'en-US')
+  let open = false
+  on('ui.panes', () => ({
+    value: open
+      ? [{ id: 'agent-crew', title: 'Agent Crew', isShown: true, isFocused: false, isPlaced: true }]
+      : [],
+  }))
+  on('ui.open', () => {
+    open = true
+    return { value: { isPlaced: true } }
+  })
+  on('ui.close', () => {
+    open = false
+    return { value: undefined }
+  })
+  await $.session.start({ cwd: 'C:/proj', surface: 'desktop', isInteractive: true })
+  await settle()
+
+  const band = await $.ui.mount({ ...BAND, surface: 'desktop' })
+  expect(await band.find({ type: 'Button', key: 'crew' })).toBe(undefined)
+  await band.unmount()
+
+  const beside = await $.ui.mount({
+    plugin: 'agent-crew',
+    component: 'BesidePrompt',
+    surface: 'desktop',
+    props: { maxColumns: 30, floatRows: 10, floatColumns: 60, isWorking: false, view: {} },
+  } as const)
+  const cell = await beside.find({ type: 'Client', key: 'crew-toggle' } as never)
+  expect((cell?.props as { props?: { label?: string } }).props?.label).toBe('Agent Crew')
+  await beside.pointer({ type: 'up', x: 1, y: 0, button: 'left', in: 'crew-toggle' })
+  await settle()
+  expect(open).toBe(true)
+  await beside.pointer({ type: 'up', x: 1, y: 0, button: 'left', in: 'crew-toggle' })
+  await settle()
+  expect(open).toBe(false)
+  await beside.unmount()
 })
 
 /** Lets the work the mod left running (a language check, a review) move on. */
