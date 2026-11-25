@@ -1,6 +1,8 @@
 import { expect, test } from 'claude-code/testing'
 import type { TestBody } from 'claude-code/testing'
 
+import { isExpired } from './register'
+
 // The test runner has timers; the mod's own types do not declare them.
 declare const setTimeout: (run: () => void, ms: number) => unknown
 
@@ -119,6 +121,60 @@ test('a subagent at work: its character, what it does, and when it is done', asy
   expect((await ui.find({ type: 'Text', text: /Hecho en/ }))?.text).toMatch(/1 paso$/)
   expect((await ui.find({ type: 'Text', text: /Ningún/ }))?.text).toBe('Ningún subagente en marcha')
   await ui.unmount()
+})
+
+test('a finished subagent has a cross that takes it off; View says why it cannot show one', async ($, on) => {
+  engine(on)
+  on('ui.open', () => ({ value: { isPlaced: true } }))
+  let n = 0
+  on('agent.spawn', () => ({ model: 'claude-haiku-5-5', agentId: `a${++n}` }))
+  on('turn.complete', () => ({ text: 'ok' }))
+  on('ui.view', () => ({ value: { deny: 'no tasks list here' } }))
+  const toasts: string[] = []
+  on('ui.toast', (_, e) => {
+    toasts.push((e as { text: string }).text)
+    return { value: undefined }
+  })
+  await $.session.start({ cwd: 'C:/proj', surface: 'vscode', isInteractive: true })
+  await settle()
+  for (const description of ['uno', 'dos', 'tres']) {
+    await $.agent.spawn({ prompt: 'x', description, subagentType: 'Explore' } as never)
+  }
+
+  let ui = await $.ui.mount({ ...PANE, surface: 'vscode' })
+  await ui.press({ key: 'view-a1' })
+  expect(toasts.at(-1)).toBe('No se puede mostrar este subagente: no tasks list here')
+  await ui.unmount()
+
+  for (const agentId of ['a1', 'a2']) {
+    await $.turn.complete({
+      answer: 'ok', durationMs: 1, isAborted: false, turnId: `t-${agentId}`, agentId, reason: 'completed',
+    } as never)
+  }
+  for (const surface of ['vscode', 'desktop', 'terminal'] as const) {
+    const pane = await $.ui.mount({ ...PANE, surface })
+    expect(await pane.find({ type: 'Button', key: 'dismiss-a3' })).toBeUndefined() // still running
+    expect(await pane.find({ type: 'Button', key: 'dismiss-a1' })).toBeDefined()
+    await pane.unmount()
+  }
+  ui = await $.ui.mount({ ...PANE, surface: 'vscode' })
+  await ui.press({ key: 'dismiss-a1' })
+  expect(await ui.find({ type: 'Button', key: 'dismiss-a1' })).toBeUndefined()
+  expect(await ui.find({ type: 'Button', key: 'dismiss-a2' })).toBeDefined()
+  await ui.press({ key: 'clear-finished' })
+  expect(await ui.find({ type: 'Button', key: 'dismiss-a2' })).toBeUndefined()
+  expect(await ui.find({ type: 'Button', key: 'view-a3' })).toBeDefined()
+  await ui.unmount()
+})
+
+test('a finished subagent leaves the panel ten minutes after it ended', () => {
+  const a = {
+    id: 'a', type: 'Explore', description: '', model: 'haiku', color: '#fff',
+    activity: '', steps: 1, startedAt: 0, endedAt: 1_000,
+  }
+  expect(isExpired({ ...a, status: 'done' }, 1_000 + 9 * 60_000)).toBe(false)
+  expect(isExpired({ ...a, status: 'fail' }, 1_000 + 10 * 60_000)).toBe(true)
+  expect(isExpired({ ...a, status: 'run' }, 1_000 + 60 * 60_000)).toBe(false)
 })
 
 test('in VS Code, the quiet button above the prompt opens and closes the panel', async ($, on) => {

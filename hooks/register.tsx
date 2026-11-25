@@ -25,6 +25,7 @@ const ARCHITECT = 'architect'
 const ARCHITECT_TYPE = `${PLUGIN}:${ARCHITECT}`
 const KEEP = 30 // subagents remembered
 const SHOW_DONE = 4 // finished ones shown under the running ones
+const DONE_TTL_MS = 10 * 60_000 // a finished subagent leaves the panel this long after it ended
 const REVIEW_TIMEOUT_MS = 10 * 60_000
 /** Store key: how many recent messages the person wrote in each language. */
 const TALK = 'talk'
@@ -102,6 +103,7 @@ export const register: Register = (on, options) => {
     } catch (err) {
       $.ui.log(`agent-crew: could not register the architect: ${String(err)}`, { to: 'debug' })
     }
+    void pruneFinished($)
     root = await projectRoot($, e.cwd)
     crew = await generatedNames($)
     // After the session has settled, offer to set up the project or check it is up to date.
@@ -195,6 +197,7 @@ export const register: Register = (on, options) => {
       )
       waiting.get(agentId)?.(stopped ? null : e.answer)
       waiting.delete(agentId)
+      $.clock.after(DONE_TTL_MS + 1_000, () => void pruneFinished($))
     }
     return next(e)
   })
@@ -292,9 +295,10 @@ export const register: Register = (on, options) => {
     const t = await w($)
     const list = await read($, agents)
     const state = await read($, review)
+    const now = await $.clock.now()
     const running = list.filter(a => a.status === 'run')
     const finished = list
-      .filter(a => a.status !== 'run')
+      .filter(a => a.status !== 'run' && !isExpired(a, now))
       .sort((a, b) => (b.endedAt ?? 0) - (a.endedAt ?? 0))
       .slice(0, SHOW_DONE)
 
@@ -330,12 +334,18 @@ export const register: Register = (on, options) => {
             <Text dimColor={a.status !== 'run'}>{detail}</Text>
             {a.status === 'run' && a.description && <Text dimColor>{cut(a.description, 60)}</Text>}
           </Box>
-          {a.status === 'run' && (
+          {a.status === 'run' ? (
+            <Button key={`view-${a.id}`} label={t.view} onPress={() => viewAgent($, a.id)} />
+          ) : (
             <Button
-              key={`view-${a.id}`}
-              label={t.view}
-              onPress={() => void $.ui.view({ agentId: a.id })}
-            />
+              key={`dismiss-${a.id}`}
+              label={t.dismiss}
+              plain
+              dimColor
+              onPress={() => void dismiss($, [a.id])}
+            >
+              ✕
+            </Button>
           )}
         </Box>
       )
@@ -362,7 +372,20 @@ export const register: Register = (on, options) => {
         {header}
         <Text dimColor>{running.length ? t.running(running.length) : t.none}</Text>
         {running.map(row)}
-        {finished.length > 0 && <Text dimColor>{t.finished}</Text>}
+        {finished.length > 0 && (
+          <Box flexDirection="row" gap={1} alignItems="center">
+            <Box flexGrow={1}>
+              <Text dimColor>{t.finished}</Text>
+            </Box>
+            <Button
+              key="clear-finished"
+              label={t.clearFinished}
+              plain
+              dimColor
+              onPress={() => void dismiss($, list.filter(a => a.status !== 'run').map(a => a.id))}
+            />
+          </Box>
+        )}
         {finished.map(row)}
         <Box flexDirection="column" gap={0}>
           <Text weight="semibold">{t.project}</Text>
@@ -392,6 +415,37 @@ export function modelName(model: string): string {
 }
 
 // --- helpers (top level: the engine follows `$` only through these) ------------------
+
+export function isExpired(a: Agent, now: number): boolean {
+  return a.status !== 'run' && now - (a.endedAt ?? a.startedAt) >= DONE_TTL_MS
+}
+
+/** Takes finished subagents off the panel (a running one stays, whatever is asked). */
+async function dismiss($: EngineInterface, ids: string[]) {
+  await update($, agents, list => list.filter(a => a.status === 'run' || !ids.includes(a.id)))
+}
+
+/** Drops the finished subagents that ended long enough ago. */
+async function pruneFinished($: EngineInterface) {
+  const now = await $.clock.now()
+  await update($, agents, list =>
+    list.some(a => isExpired(a, now)) ? list.filter(a => !isExpired(a, now)) : list,
+  )
+}
+
+/**
+ * Shows the subagent's transcript in the main view. The engine may refuse (a surface
+ * that cannot switch views, a subagent the tasks list does not show): say why, so the
+ * press never looks like it did nothing.
+ */
+function viewAgent($: EngineInterface, agentId: string) {
+  $.ui.view({ agentId }).then(
+    async shown => {
+      if (shown.deny !== undefined) $.ui.toast((await w($)).cannotView(shown.deny))
+    },
+    async (err: unknown) => $.ui.toast((await w($)).cannotView(String(err))),
+  )
+}
 
 async function setUpOrReview($: EngineInterface, asked: boolean) {
   if (!root) return
