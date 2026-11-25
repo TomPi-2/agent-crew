@@ -123,7 +123,7 @@ test('a subagent at work: its character, what it does, and when it is done', asy
   await ui.unmount()
 })
 
-test('a finished subagent has a cross that takes it off; View says why it cannot show one', async ($, on) => {
+test('a finished subagent has a cross that takes it off; View says why it cannot show one, and is not offered in VS Code', async ($, on) => {
   engine(on)
   on('ui.open', () => ({ value: { isPlaced: true } }))
   let n = 0
@@ -141,9 +141,13 @@ test('a finished subagent has a cross that takes it off; View says why it cannot
     await $.agent.spawn({ prompt: 'x', description, subagentType: 'Explore' } as never)
   }
 
-  let ui = await $.ui.mount({ ...PANE, surface: 'vscode' })
-  await ui.press({ key: 'view-a1' })
+  const desk = await $.ui.mount({ ...PANE, surface: 'desktop' })
+  await desk.press({ key: 'view-a1' })
   expect(toasts.at(-1)).toBe('No se puede mostrar este subagente: no tasks list here')
+  await desk.unmount()
+  // VS Code has no main view to switch: no View there.
+  let ui = await $.ui.mount({ ...PANE, surface: 'vscode' })
+  expect(await ui.find({ type: 'Button', key: 'view-a1' })).toBeUndefined()
   await ui.unmount()
 
   for (const agentId of ['a1', 'a2']) {
@@ -163,7 +167,7 @@ test('a finished subagent has a cross that takes it off; View says why it cannot
   expect(await ui.find({ type: 'Button', key: 'dismiss-a2' })).toBeDefined()
   await ui.press({ key: 'clear-finished' })
   expect(await ui.find({ type: 'Button', key: 'dismiss-a2' })).toBeUndefined()
-  expect(await ui.find({ type: 'Button', key: 'view-a3' })).toBeDefined()
+  expect(await ui.find({ type: 'Text', text: /^Explore$/ })).toBeDefined() // a3 still listed
   await ui.unmount()
 })
 

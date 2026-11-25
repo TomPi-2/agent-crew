@@ -296,6 +296,8 @@ export const register: Register = (on, options) => {
     const list = await read($, agents)
     const state = await read($, review)
     const now = await $.clock.now()
+    // VS Code has no main view to put a subagent's transcript in ("no main view here").
+    const canView = e.surface !== 'vscode'
     const running = list.filter(a => a.status === 'run')
     const finished = list
       .filter(a => a.status !== 'run' && !isExpired(a, now))
@@ -335,7 +337,9 @@ export const register: Register = (on, options) => {
             {a.status === 'run' && a.description && <Text dimColor>{cut(a.description, 60)}</Text>}
           </Box>
           {a.status === 'run' ? (
-            <Button key={`view-${a.id}`} label={t.view} onPress={() => viewAgent($, a.id)} />
+            canView && (
+              <Button key={`view-${a.id}`} label={t.view} onPress={() => viewAgent($, a.id)} />
+            )
           ) : (
             <Button
               key={`dismiss-${a.id}`}

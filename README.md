@@ -8,7 +8,7 @@ A Claude Code mod that lets you **see your subagents at work** and gives every p
 
 ## What it does
 
-**A panel with your subagents.** Each running subagent shows up as a small animated character: the initial of its model with a face. H is Haiku (a quick hop), S is Sonnet (a gentle sway), O is Opus (slow breathing) and F is Fable (floating). Each one has its own colour, and next to it you see its name, its model and what it is doing right now, such as *Reading server.py* or *Searching "parse_config"*. When it finishes, it smiles and moves to *Finished* with its time and number of steps. **View** opens its transcript.
+**A panel with your subagents.** Each running subagent shows up as a small animated character: the initial of its model with a face. H is Haiku (a quick hop), S is Sonnet (a gentle sway), O is Opus (slow breathing) and F is Fable (floating). Each one has its own colour, and next to it you see its name, its model and what it is doing right now, such as *Reading server.py* or *Searching "parse_config"*. When it finishes, it smiles and moves to *Finished* with its time and number of steps. **View** opens its transcript (in the desktop app and the terminal; VS Code has no view to open it in). A finished one goes away with its **✕**, all of them with **Clear**, and on its own 10 minutes after it ended.
 
 **A button to open and close it.** A quiet *Agent Crew* label shows how many subagents are running, in the colour of one at work. Click it to open or close the panel; you don't need to type a command. In the desktop app it sits right beside the message box. In VS Code and the terminal it is on the right of a thin bar above the prompt.
 
